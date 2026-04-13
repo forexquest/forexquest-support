@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForexQuest Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <style>
+        body { background-color: #000b18; color: white; font-family: sans-serif; }
+        .chat-img { max-width: 150px; border-radius: 8px; cursor: pointer; border: 1px solid #333; }
+        .rating-msg { background: #D4AF37; color: #000; font-weight: bold; border-radius: 4px; padding: 4px 8px; font-size: 10px; margin-top: 5px; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <div class="w-32 border-r border-gray-800 bg-gray-900/50 flex flex-col shrink-0">
+        <div class="p-3 border-b border-gray-800 font-black text-[#D4AF37] text-[10px] uppercase tracking-widest">Active Chats</div>
+        <div id="user-list" class="flex-1 overflow-y-auto"></div>
+    </div>
+
+    <div class="flex-1 flex flex-col min-w-0">
+        <div id="active-user-title" class="p-3 border-b border-gray-800 text-[10px] text-gray-500 font-bold uppercase">Select a user</div>
+        <div id="admin-chat-display" class="flex-1 p-4 overflow-y-auto space-y-4"></div>
+        
+        <div class="p-3 border-t border-gray-800 bg-gray-900/20 space-y-2">
+            <div class="flex gap-2">
+                <input type="text" id="admin-msg" placeholder="Type reply..." class="flex-1 bg-gray-800 p-2 rounded-lg text-xs outline-none border border-gray-700 text-white">
+                <button onclick="sendAdminReply()" class="bg-[#D4AF37] text-black px-4 rounded-lg font-bold text-xs active:scale-95">Send</button>
+            </div>
+            <button onclick="triggerRating()" class="w-full py-2 bg-red-600/10 text-red-500 border border-red-600/30 rounded-lg text-[10px] font-black uppercase tracking-tighter active:scale-95">
+                End Session & Ask for Feedback
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDYZxfER-KfThiRp9MLu869aDrjX9BDOqs",
+            databaseURL: "https://forexquest-fbcac-default-rtdb.firebaseio.com/",
+            projectId: "forexquest-fbcac",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        let selectedUser = null;
+
+        database.ref('support_chats').on('value', (snapshot) => {
+            const list = document.getElementById('user-list');
+            list.innerHTML = '';
+            snapshot.forEach((child) => {
+                const userId = child.key;
+                const div = document.createElement('div');
+                div.className = "p-3 border-b border-gray-800 hover:bg-gray-800 text-[10px] truncate cursor-pointer font-bold";
+                div.innerText = userId;
+                div.onclick = () => loadChat(userId);
+                list.appendChild(div);
+            });
+        });
+
+        function loadChat(userId) {
+            selectedUser = userId;
+            document.getElementById('active-user-title').innerText = "Chatting with: " + userId;
+            const display = document.getElementById('admin-chat-display');
+            display.innerHTML = ''; 
+
+            database.ref('support_chats/' + userId).off();
+            database.ref('support_chats/' + userId).on('child_added', (snap) => {
+                const msg = snap.val();
+                const div = document.createElement('div');
+                div.className = msg.sender === 'user' ? "flex flex-col items-start" : "flex flex-col items-end";
+                
+                let content = "";
+                if (msg.type === 'image') {
+                    content = `<img src="${msg.text}" class="chat-img" onclick="window.open('${msg.text}')">`;
+                } else if (msg.type === 'rating_result') {
+                    content = `<div class="rating-msg">⭐ ${msg.text}</div>`;
+                } else if (msg.type !== 'close_session') {
+                    content = `<span class="inline-block p-2 rounded-lg text-[10px] ${msg.sender === 'user' ? 'bg-gray-800' : 'bg-[#D4AF37] text-black font-bold'}">${msg.text}</span>`;
+                }
+                
+                if(content) {
+                    div.innerHTML = content;
+                    display.appendChild(div);
+                    display.scrollTop = display.scrollHeight;
+                }
+            });
+        }
+
+        function sendAdminReply() {
+            const input = document.getElementById('admin-msg');
+            if (!input.value || !selectedUser) return;
+            database.ref('support_chats/' + selectedUser).push({ sender: 'admin', text: input.value, type: 'text', time: Date.now() });
+            input.value = '';
+        }
+
+        function triggerRating() {
+            if (!selectedUser) return alert("Select a user first");
+            if (confirm("End session and ask for feedback?")) {
+                database.ref('support_chats/' + selectedUser).push({ sender: 'admin', text: 'Session Closed', type: 'close_session', time: Date.now() });
+            }
+        }
+    </script>
+</body>
+</html>
