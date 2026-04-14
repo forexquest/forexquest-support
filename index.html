@@ -80,7 +80,7 @@
         };
 
         const BOT_TOKEN = '8670584691:AAGk5OifLolCXzte-X-R6j7hMt14LkK4ok0';
-        const ADMIN_GROUP_ID = '-1003903750289'; // Updated with your correct Supergroup ID
+        const ADMIN_GROUP_ID = '-1003903750289'; 
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
@@ -92,7 +92,6 @@
         const chatBox = document.getElementById('chat-container');
         const userInput = document.getElementById('user-input');
 
-        // --- CYRUS AUTOMATED GREETING ---
         function sendCyrusGreeting() {
             const greeting = "Hello! 👋 Go ahead and ask your question 👍\n\nPlease include your telegram username so we can help you faster!\n\nAn agent will reply as soon as possible 🧑‍💻 thank you for your patience.";
             displayMessage(greeting, 'cyrus');
@@ -101,17 +100,22 @@
         sendCyrusGreeting();
         setInterval(sendCyrusGreeting, 1800000);
 
-        // --- TELEGRAM NOTIFICATION (Final Power Version) ---
+        // --- UPDATED TRIPLE-THREAT NOTIFICATION ---
         function notifyTelegramAdmin(msg) {
-            const adminText = `🚨 *NEW SUPPORT INQUIRY*\n\n🆔 *ID:* \`${userId}\` \n📝 *Message:* "${msg}"\n\nCheck site for ID: ${userId}`;
+            const adminText = `🚨 *NEW SUPPORT INQUIRY*\n\n🆔 *ID:* \`${userId}\` \n📝 *Message:* "${msg}"`;
             const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${ADMIN_GROUP_ID}&text=${encodeURIComponent(adminText)}&parse_mode=Markdown`;
 
-            // This "beacon" method is the most reliable for mobile browser previews
-            const beacon = new Image();
-            beacon.src = url;
+            // Method 1: Fetch
+            fetch(url).catch(() => console.log("Fetch failed, trying beacons..."));
             
-            // Standard fetch as primary
-            fetch(url).catch(err => console.log("Silent notify active"));
+            // Method 2: Image Beacon (Bypasses most browser blocks)
+            const img = new Image();
+            img.src = url;
+
+            // Method 3: Navigator Beacon (For background processing)
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(url);
+            }
         }
 
         function displayMessage(text, sender, isImage = false) {
