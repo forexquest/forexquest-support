@@ -79,7 +79,7 @@
             projectId: "forexquest-fbcac",
         };
 
-        const BOT_TOKEN = '8670584691:AAGk5OifLolCXzte-X-R6j7hMt14LkK4ok0';
+        const BOT_TOKEN = '8670584691:AAFX9o5pCFn2z1w_eC6VPIhM3h__H_3xvoQ';
         const ADMIN_GROUP_ID = '-1003903750289'; 
 
         firebase.initializeApp(firebaseConfig);
@@ -100,22 +100,13 @@
         sendCyrusGreeting();
         setInterval(sendCyrusGreeting, 1800000);
 
-        // --- UPDATED TRIPLE-THREAT NOTIFICATION ---
+        // --- SINGLE OPTIMIZED NOTIFICATION ---
         function notifyTelegramAdmin(msg) {
             const adminText = `🚨 *NEW SUPPORT INQUIRY*\n\n🆔 *ID:* \`${userId}\` \n📝 *Message:* "${msg}"`;
             const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${ADMIN_GROUP_ID}&text=${encodeURIComponent(adminText)}&parse_mode=Markdown`;
 
-            // Method 1: Fetch
-            fetch(url).catch(() => console.log("Fetch failed, trying beacons..."));
-            
-            // Method 2: Image Beacon (Bypasses most browser blocks)
-            const img = new Image();
-            img.src = url;
-
-            // Method 3: Navigator Beacon (For background processing)
-            if (navigator.sendBeacon) {
-                navigator.sendBeacon(url);
-            }
+            // Simple, single request
+            fetch(url).catch(err => console.log("Notification error"));
         }
 
         function displayMessage(text, sender, isImage = false) {
